@@ -2,3 +2,4 @@ conda create --name qmg python=3.10
 conda install ipykernel
 python -m ipykernel install --user --name qmg --display-name "qmg"
 pip install rdkit
+pip install pandas

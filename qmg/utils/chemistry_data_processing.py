@@ -20,6 +20,7 @@ class MoleculeQuantumStateGenerator():
         self.idx_to_bond_type = {1: Chem.rdchem.BondType.SINGLE, 2: Chem.rdchem.BondType.DOUBLE, 3: Chem.rdchem.BondType.TRIPLE}
         self.qubits_per_type_atom = int(np.ceil(np.log2(len(self.atom_type_to_idx) + 1))) # How many qubits required for describing the quantum state of atom type
         self.qubits_per_type_bond = int(np.ceil(np.log2(len(self.bond_type_to_idx) + 1))) # How many qubits required for describing the quantum state of bond type
+        self.n_qubits = int(self.size * self.qubits_per_type_atom + self.size * (self.size-1) / 2 * self.qubits_per_type_bond)
 
     def decimal_to_binary(self, x, padding_length=2):
         """
@@ -130,6 +131,16 @@ class MoleculeQuantumStateGenerator():
     
     def QuantumStateToSmiles(self, quantum_state):
         return self.ConnectivityToSmiles(*self.QuantumStateToConnectivity(quantum_state))
+    
+    def QuantumStateToStateVector(self, quantum_state):
+        stat_vector = np.zeros(2**self.size)
+        decimal = int(quantum_state, 2)
+        stat_vector[-1-decimal] = 1
+        return stat_vector
+    
+    def QuantumStateToDecimal(self, quantum_state):
+        decimal = int(quantum_state, 2)
+        return decimal
     
     def generate_permutations(self, k):
         """
