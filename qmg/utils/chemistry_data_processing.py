@@ -2,6 +2,7 @@ from rdkit import Chem
 import numpy as np
 import itertools
 import multiprocessing
+import pandas as pd
 
 def subfunction_generate_state(cls, node_vector, adjacency_matrix, new_index):
     """Wrapper function for the use of multiprocessing. """
@@ -133,7 +134,7 @@ class MoleculeQuantumStateGenerator():
         return self.ConnectivityToSmiles(*self.QuantumStateToConnectivity(quantum_state))
     
     def QuantumStateToStateVector(self, quantum_state):
-        stat_vector = np.zeros(2**self.size)
+        stat_vector = np.zeros(2**self.n_qubits)
         decimal = int(quantum_state, 2)
         stat_vector[-1-decimal] = 1
         return stat_vector
@@ -183,6 +184,15 @@ class MoleculeQuantumStateGenerator():
                 new_adjacency_matrix[ix_new][iy_new] = bond_type_idx
                 new_adjacency_matrix[iy_new][ix_new] = bond_type_idx
         return new_node_vector, new_adjacency_matrix
+
+    def generate_valid_mask(self, data: pd.DataFrame):
+        """
+        :return: binary valid quantum states mask (np.ndarray)
+        """
+        valid_state_vector_mask = np.zeros(2**self.n_qubits)
+        for decimal_index in set(data["decimal_index"]):
+            valid_state_vector_mask[-1-int(decimal_index)] = 1
+        return valid_state_vector_mask
 
 if __name__ == "__main__":
     smiles = "CCOC=NC(O)C"
