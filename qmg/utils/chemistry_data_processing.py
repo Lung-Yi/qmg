@@ -191,7 +191,7 @@ class MoleculeQuantumStateGenerator():
         """
         valid_state_vector_mask = np.zeros(2**self.n_qubits)
         for decimal_index in set(data["decimal_index"]):
-            valid_state_vector_mask[-1-int(decimal_index)] = 1
+            valid_state_vector_mask[int(decimal_index)] = 1
         return valid_state_vector_mask
 
 if __name__ == "__main__":
