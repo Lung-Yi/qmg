@@ -1,4 +1,6 @@
 jupyterlab-qiskit/
 test_development/data
+test_development/models
+test_development/*/
 job/
 qml_hw2/
