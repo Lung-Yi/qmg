@@ -11,7 +11,7 @@ def subfunction_generate_state(cls, node_vector, adjacency_matrix, new_index):
     return new_quantum_state
 
 class MoleculeQuantumStateGenerator():
-    def __init__(self, heavy_atom_size=5, ncpus=4):
+    def __init__(self, heavy_atom_size=5, ncpus=4, sanitize_method="strict"):
         self.size = heavy_atom_size
         self.effective_numbers = list(range(heavy_atom_size))
         self.ncpus = ncpus
@@ -22,6 +22,8 @@ class MoleculeQuantumStateGenerator():
         self.qubits_per_type_atom = int(np.ceil(np.log2(len(self.atom_type_to_idx) + 1))) # How many qubits required for describing the quantum state of atom type
         self.qubits_per_type_bond = int(np.ceil(np.log2(len(self.bond_type_to_idx) + 1))) # How many qubits required for describing the quantum state of bond type
         self.n_qubits = int(self.size * self.qubits_per_type_atom + self.size * (self.size-1) / 2 * self.qubits_per_type_bond)
+        self.sanitize_method = sanitize_method
+        self.atom_valence_dict = {"C":4, "N":3, "O":2}
 
     def decimal_to_binary(self, x, padding_length=2):
         """
@@ -88,10 +90,29 @@ class MoleculeQuantumStateGenerator():
                     except:
                         return None
         mol = mol.GetMol()
-        try:
-            Chem.SanitizeMol(mol)
-        except:
-            return None
+        if self.sanitize_method == "strict":
+            try:
+                Chem.SanitizeMol(mol)
+            except:
+                return None
+        elif self.sanitize_method == "soft":
+            try:
+                Chem.SanitizeMol(mol)
+            except:
+                try:
+                    for atom in mol.GetAtoms():
+                        bond_count = int(sum([bond.GetBondTypeAsDouble() for bond in atom.GetBonds()]))
+                        if atom.GetSymbol() == "O" and bond_count >= 3:
+                            atom.SetFormalCharge(bond_count - 2)
+                        elif atom.GetSymbol() == "N" and bond_count >= 4:
+                            atom.SetFormalCharge(bond_count - 3)
+                        elif atom.GetSymbol() == "c" and bond_count >= 5:
+                            atom.SetFormalCharge(bond_count - 4)
+                    Chem.SanitizeMol(mol)
+                except:
+                    return None
+        else:
+            pass
         for atom in mol.GetAtoms():
             atom.SetAtomMapNum(0)
         return Chem.MolToSmiles(mol)
@@ -143,6 +164,25 @@ class MoleculeQuantumStateGenerator():
         decimal = int(quantum_state, 2)
         return decimal
     
+    def post_process_quantum_state(self, result_state: str):
+        """
+        Reverse the qiskit outcome state and change the order to meet the definition of node vector and adjacency matrix.
+
+        :param result_state: computational state derived from qiskit measurement outcomes
+        :return: str of post-processed quantum state
+        """
+        assert len(result_state) == self.size*(self.size+1)
+        result_state = result_state[::-1]
+        quantum_state = ""
+        for i in range(self.size):
+            atom_start_idx = i*2 + i*(i-1)
+            quantum_state += result_state[atom_start_idx:atom_start_idx+2]
+        for i in range(1, self.size):
+            for a_k, j in enumerate(range(i, self.size)):
+                bond_start_idx = (i+1)*2 + 2*a_k + j*(j-1) + (i-1)*2
+                quantum_state += result_state[bond_start_idx:bond_start_idx+2]
+        return quantum_state
+
     def generate_permutations(self, k):
         """
         Generate all possible permutations of k elements from the given list of elements.

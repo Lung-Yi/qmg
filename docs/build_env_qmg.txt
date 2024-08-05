@@ -16,3 +16,4 @@ pip install torch==2.2.0
 pip install torchvision==0.17.0
 pip install cuquantum
 pip install tqdm
+pip install molvs
