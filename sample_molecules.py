@@ -41,5 +41,5 @@ if __name__ == "__main__":
     # logger.info(smiles_dict)
     logger.info("Validity: {:.2f}%".format(validity * 100))
     logger.info("Diversity: {:.2f}%".format(diversity * 100))
-    with open(f"results/heavy_atom_{args.num_heavy_atom}.pkl", "wb") as f:
+    with open(f"results/heavy_atom_{args.num_heavy_atom}_seed_{args.random_seed}.pkl", "wb") as f:
         pickle.dump(smiles_dict, f)
