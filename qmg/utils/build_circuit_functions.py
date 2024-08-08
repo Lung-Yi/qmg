@@ -93,8 +93,17 @@ class CircuitBuilder():
         for id_ in control_qubits_index_list:
             self.qc.x(id_)
         self.qc.cx(ancilla_qubit_index, control_qubits_index_list[-1])
+        
+    def measure(self):
+        effective_qubit_index = list(range(self.num_qubits + self.num_ancilla_qubits))
+        for j in range(2, self.num_heavy_atom+1):
+            ancilla_qubit_number = 2*j + (j-1)**2 - 1
+            effective_qubit_index.remove(ancilla_qubit_number)
+        self.effective_qubit_index = effective_qubit_index
+        self.qc.measure(self.effective_qubit_index, list(range(self.num_qubits)))
     
-    def generate_quantum_circuit(self, all_weight_vector:Union[List[float], np.ndarray]=None):
+    def generate_quantum_circuit(self, all_weight_vector:Union[List[float], np.ndarray]=None, random_seed=0):
+        random.seed(random_seed)
         self.random = not all_weight_vector
         self.initialize_quantum_circuit()
         # (1) generate weight vector
@@ -134,7 +143,7 @@ class CircuitBuilder():
             else:
                 if self.remove_bond_disconnection:
                     self.build_removing_bond_disconnection_circuit(heavy_idx)
-
+        self.measure()
         return self.qc
 
 if __name__=="__main__":
