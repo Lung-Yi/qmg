@@ -1,6 +1,7 @@
 jupyterlab-qiskit/
-test_development/data
-test_development/models
 test_development/*/
 job/
 qml_hw2/
+results/
+analyze_scripts/
+analyze_scripts__1/

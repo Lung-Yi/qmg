@@ -6,7 +6,7 @@ from typing import List, Union
 from rdkit import RDLogger
 RDLogger.DisableLog('rdApp.*')
 
-from utils import MoleculeQuantumStateGenerator, CircuitBuilder
+from .utils import MoleculeQuantumStateGenerator, CircuitBuilder
 
 class MoleculeGenerator():
     def __init__(self, num_heavy_atom:int, all_weight_vector:Union[List[float], np.ndarray]=None,
