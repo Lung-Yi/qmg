@@ -30,8 +30,8 @@ class MoleculeGenerator():
 
     def sample_molecule(self, num_sample, random_seed:int=0):
         self.generate_quantum_circuit(random_seed)
-        simulator = Aer.get_backend('qasm_simulator')
-        results = execute(self.qc, backend=simulator, shots=num_sample).result()
+        backend = Aer.get_backend('qasm_simulator')
+        results = execute(self.qc, backend=backend, shots=num_sample).result()
         counts = results.get_counts(self.qc)
 
         smiles_dict = {}

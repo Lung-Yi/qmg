@@ -3,6 +3,7 @@ import logging
 import pandas as pd
 from qmg.generator import MoleculeGenerator
 from rdkit import RDLogger
+import pickle
 
 RDLogger.DisableLog('rdApp.*')
 
@@ -37,6 +38,8 @@ if __name__ == "__main__":
                            remove_bond_disconnection=not args.allow_bond_disconnection, chemistry_constraint=not args.no_chemistry_constraint)
     smiles_dict, validity, diversity = mg.sample_molecule(num_sample=args.num_sample, random_seed=args.random_seed)
     
-    logger.info(smiles_dict)
+    # logger.info(smiles_dict)
     logger.info("Validity: {:.2f}%".format(validity * 100))
     logger.info("Diversity: {:.2f}%".format(diversity * 100))
+    with open(f"results/heavy_atom_{args.num_heavy_atom}.pkl", "wb") as f:
+        pickle.dump(smiles_dict, f)
