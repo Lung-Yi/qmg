@@ -3,4 +3,5 @@ test_development/*/
 job/
 qml_hw2/
 results/
+results_without_constraint/
 analyze_scripts/

@@ -27,7 +27,10 @@ if __name__ == "__main__":
     parser.add_argument('--no_chemistry_constraint', action='store_true')
     args = parser.parse_args()
 
-    file_name = f"results/num_{args.num_heavy_atom}_atoms_sample_{args.num_sample}_seed_{args.random_seed}_temperature_{args.temperature}.log"
+    if args.no_chemistry_constraint:
+        file_name = f"results_without_constraint/num_{args.num_heavy_atom}_atoms_sample_{args.num_sample}_seed_{args.random_seed}_temperature_{args.temperature}.log"
+    else:
+        file_name = f"results/num_{args.num_heavy_atom}_atoms_sample_{args.num_sample}_seed_{args.random_seed}_temperature_{args.temperature}.log"
     logger = setup_logger(file_name)
     logger.info(f"# of heavy atoms: {args.num_heavy_atom}")
     logger.info(f"# of samples: {args.num_sample}")
@@ -41,5 +44,9 @@ if __name__ == "__main__":
     # logger.info(smiles_dict)
     logger.info("Validity: {:.2f}%".format(validity * 100))
     logger.info("Diversity: {:.2f}%".format(diversity * 100))
-    with open(f"results/heavy_atom_{args.num_heavy_atom}_seed_{args.random_seed}.pkl", "wb") as f:
-        pickle.dump(smiles_dict, f)
+    if args.no_chemistry_constraint:
+        with open(f"results_without_constraint/heavy_atom_{args.num_heavy_atom}_seed_{args.random_seed}.pkl", "wb") as f:
+            pickle.dump(smiles_dict, f)
+    else:
+        with open(f"results/heavy_atom_{args.num_heavy_atom}_seed_{args.random_seed}.pkl", "wb") as f:
+            pickle.dump(smiles_dict, f)
