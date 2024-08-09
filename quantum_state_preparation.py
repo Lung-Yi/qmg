@@ -15,7 +15,7 @@ if __name__ == "__main__":
                         default=4)
     args = parser.parse_args()
 
-    qg = MoleculeQuantumStateGenerator(heavy_atom_size=args.heavy_atom_size)
+    qg = MoleculeQuantumStateGenerator(heavy_atom_size=args.heavy_atom_size, ncpus=args.ncpus)
     def subfunction_check_state(decimal):
         quantum_state = qg.decimal_to_binary(decimal, qg.n_qubits)
         smiles = qg.ConnectivityToSmiles(*qg.QuantumStateToConnectivity(quantum_state))
