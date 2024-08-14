@@ -22,7 +22,7 @@ class MoleculeGenerator():
         self.num_ancilla_qubits = num_heavy_atom - 1
         self.data_generator = MoleculeQuantumStateGenerator(heavy_atom_size=num_heavy_atom, ncpus=1, sanitize_method="strict")
         
-    def generate_quantum_circuit(self, random_seed=0):
+    def generate_quantum_circuit(self, random_seed):
         if self.dynamic_circuit:
             self.qc = DynamicCircuitBuilder(self.num_heavy_atom, self.temperature, 
                                  self.remove_bond_disconnection, self.chemistry_constraint).generate_quantum_circuit(self.all_weight_vector, random_seed)
@@ -32,6 +32,7 @@ class MoleculeGenerator():
         
     def update_weight_vector(self, all_weight_vector):
         self.all_weight_vector = all_weight_vector
+        self.random_weights = not all_weight_vector
 
     def sample_molecule(self, num_sample, random_seed:int=0):
         self.generate_quantum_circuit(random_seed)
