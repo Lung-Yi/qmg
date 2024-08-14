@@ -123,10 +123,9 @@ class DynamicCircuitBuilder():
     
     def generate_quantum_circuit(self, all_weight_vector:Union[List[float], np.ndarray]=None, random_seed=0):
         random.seed(random_seed)
-        self.random = not all_weight_vector
         self.initialize_quantum_circuit()
         # (1) generate weight vector
-        if all_weight_vector:
+        if (type(all_weight_vector) == np.ndarray) or (type(all_weight_vector) == list):
             assert len(all_weight_vector) == self.length_all_weight_vector
             self.all_weight_vector = all_weight_vector
         else:

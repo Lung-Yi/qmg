@@ -6,13 +6,12 @@ from typing import List, Union
 from rdkit import RDLogger
 RDLogger.DisableLog('rdApp.*')
 
-from utils import MoleculeQuantumStateGenerator, CircuitBuilder, DynamicCircuitBuilder
+from .utils import MoleculeQuantumStateGenerator, CircuitBuilder, DynamicCircuitBuilder
 
 class MoleculeGenerator():
     def __init__(self, num_heavy_atom:int, all_weight_vector:Union[List[float], np.ndarray]=None,
                  temperature:float=0.2, dynamic_circuit:bool=True, remove_bond_disconnection:bool=True, chemistry_constraint:bool=True):
         self.num_heavy_atom = num_heavy_atom
-        self.random_weights = not all_weight_vector
         self.all_weight_vector = all_weight_vector
         self.remove_bond_disconnection = remove_bond_disconnection
         self.chemistry_constraint = chemistry_constraint
@@ -32,7 +31,6 @@ class MoleculeGenerator():
         
     def update_weight_vector(self, all_weight_vector):
         self.all_weight_vector = all_weight_vector
-        self.random_weights = not all_weight_vector
 
     def sample_molecule(self, num_sample, random_seed:int=0):
         self.generate_quantum_circuit(random_seed)
