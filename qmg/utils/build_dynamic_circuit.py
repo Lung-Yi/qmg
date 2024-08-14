@@ -88,8 +88,8 @@ class DynamicCircuitBuilder():
         with else_:
             self.qc.ry(np.pi * weight_vector[0], qubit_1_index)
             self.qc.ry(np.pi * weight_vector[1], qubit_2_index)
-            self.qc.cx(qubit_1_index, qubit_2_index)
-            self.controlled_ry(4, 5, weight_vector[2])
+            # self.qc.cx(qubit_1_index, qubit_2_index)
+            self.controlled_ry(qubit_1_index, qubit_2_index, weight_vector[2])
         self.qc.measure(self.qubits[[qubit_1_index,qubit_2_index]], self.clbits[[clbit_1_index,clbit_2_index]])
         # create new atom existence register
         atom_existence_CR = ClassicalRegister(bits=self.clbits[[clbit_1_index,clbit_2_index]], name=f"atom_{heavy_atom_number}_existence")
