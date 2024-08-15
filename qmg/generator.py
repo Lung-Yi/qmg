@@ -57,7 +57,7 @@ if __name__ == "__main__":
     cwg = ConditionalWeightsGenerator(num_heavy_atom, smarts="[O:1]1[C:2][C:3]1", disable_connectivity_position = [1])
     random_weight_vector = cwg.generate_conditional_random_weights(random_seed)
     mg = MoleculeGenerator(num_heavy_atom, all_weight_vector=random_weight_vector) 
-    smiles_dict, validity, diversity = mg.sample_molecule(10000)
+    smiles_dict, validity, diversity = mg.sample_molecule(20000)
     print(smiles_dict)
     print("Validity: {:.2f}%".format(validity*100))
     print("Diversity: {:.2f}%".format(diversity*100))
