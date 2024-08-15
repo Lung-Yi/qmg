@@ -8,3 +8,4 @@ analyze_scripts/
 qmg/trainer_old.py
 qmg/models_old/
 qmg/train_old/
+docs_old/
