@@ -6,7 +6,7 @@ from typing import List, Union
 from rdkit import RDLogger
 RDLogger.DisableLog('rdApp.*')
 
-from .utils import MoleculeQuantumStateGenerator, CircuitBuilder, DynamicCircuitBuilder
+from .utils import MoleculeQuantumStateGenerator, CircuitBuilder, DynamicCircuitBuilder, ConditionalWeightsGenerator
 
 class MoleculeGenerator():
     def __init__(self, num_heavy_atom:int, all_weight_vector:Union[List[float], np.ndarray]=None,
@@ -52,8 +52,12 @@ class MoleculeGenerator():
         return smiles_dict, validity, diversity
     
 if __name__ == "__main__":
-    mg = MoleculeGenerator(7)
-    smiles_dict, validity, diversity = mg.sample_molecule(4096, random_seed=6)
+    num_heavy_atom = 7
+    random_seed = 3
+    cwg = ConditionalWeightsGenerator(num_heavy_atom, smarts="[O:1]1[C:2][C:3]1", disable_connectivity_position = [1])
+    random_weight_vector = cwg.generate_conditional_random_weights(random_seed)
+    mg = MoleculeGenerator(num_heavy_atom, all_weight_vector=random_weight_vector) 
+    smiles_dict, validity, diversity = mg.sample_molecule(10000)
     print(smiles_dict)
     print("Validity: {:.2f}%".format(validity*100))
     print("Diversity: {:.2f}%".format(diversity*100))
