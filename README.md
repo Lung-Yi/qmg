@@ -51,11 +51,12 @@ num_heavy_atom = 7
 random_seed = 3
 smarts = "[O:1]1[C:2][C:3]1"
 disable_connectivity_position = [1]
+num_sample = 10000
 
 cwg = ConditionalWeightsGenerator(num_heavy_atom, smarts=smarts, disable_connectivity_position=disable_connectivity_position)
 random_weight_vector = cwg.generate_conditional_random_weights(random_seed)
 mg = MoleculeGenerator(num_heavy_atom, all_weight_vector=random_weight_vector) 
-smiles_dict, validity, diversity = mg.sample_molecule(10000)
+smiles_dict, validity, diversity = mg.sample_molecule(num_sample)
 print(smiles_dict)
 print("Validity: {:.2f}%".format(validity*100))
 print("Diversity: {:.2f}%".format(diversity*100))
