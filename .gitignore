@@ -5,3 +5,6 @@ qml_hw2/
 results/
 results_without_constraint/
 analyze_scripts/
+qmg/trainer_old.py
+qmg/models_old/
+qmg/train_old/
