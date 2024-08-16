@@ -29,3 +29,8 @@ docker cp /opt/local/file.txt mycontainer:/opt/ # 從外面複製進去container
 3. `docker rm (CONTAINER ID)` # 刪除指定容器
 4. `docker rmi (IMAGE ID)` # 刪除指定image
 
+## Aug 2024 Limitations
+The current release version has the following limitations:
+1. Noise model and noisy circuit simulations are not supported.
+2. Simulations are executed in serial even if Qiskit Aer’s parallel simulation options (e.g., batched_shots_gpu, batched_shots_gpu_max_qubits) are provided.
+3. Single-process multi-GPU simulation is not supported. Users need to launch multiple MPI processes even in a single node.
