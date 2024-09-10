@@ -11,7 +11,7 @@ def subfunction_generate_state(cls, node_vector, adjacency_matrix, new_index):
     return new_quantum_state
 
 class MoleculeQuantumStateGenerator():
-    def __init__(self, heavy_atom_size=5, ncpus=4, sanitize_method="strict"):
+    def __init__(self, heavy_atom_size=5, ncpus=4, sanitize_method="strict", stereo_chiral=True):
         self.size = heavy_atom_size
         self.effective_numbers = list(range(heavy_atom_size))
         self.ncpus = ncpus
@@ -24,6 +24,7 @@ class MoleculeQuantumStateGenerator():
         self.n_qubits = int(self.size * self.qubits_per_type_atom + self.size * (self.size-1) / 2 * self.qubits_per_type_bond)
         self.sanitize_method = sanitize_method
         self.atom_valence_dict = {"C":4, "N":3, "O":2}
+        self.stereo_chiral = stereo_chiral
 
     def decimal_to_binary(self, x, padding_length=2):
         """
@@ -61,6 +62,36 @@ class MoleculeQuantumStateGenerator():
             adjacency_matrix[j][i] = self.bond_type_to_idx[bond.GetBondType()]
         return node_vector, adjacency_matrix
 
+    def _set_chiral_atom(self, mol):
+        def rank_list(lst):
+            sorted_list = sorted(enumerate(lst), key=lambda x: x[1])
+            rank = [0] * len(lst)
+            for i, (original_index, _) in enumerate(sorted_list):
+                rank[original_index] = i + 1
+            return rank
+
+        def can_sort_with_even_swaps(list1, list2):
+            def count_inversions(lst):
+                inversions = 0
+                for i in range(len(lst)):
+                    for j in range(i + 1, len(lst)):
+                        if lst[i] > lst[j]:
+                            inversions += 1
+                return inversions
+            inversions_list1 = count_inversions(list1)
+            inversions_list2 = count_inversions(list2)
+            return (inversions_list1 - inversions_list2) % 2 == 0
+
+        for atom in mol.GetAtoms():
+            if atom.GetPropsAsDict(True, False).get("_ChiralityPossible", 0):
+                atom_map_list = [int(neighbor.GetProp('molAtomMapNumber')) for neighbor in atom.GetNeighbors()]
+                CIP_list = [int(neighbor.GetProp('_CIPRank')) for neighbor in atom.GetNeighbors()]
+                chiral_tag = can_sort_with_even_swaps(rank_list(atom_map_list), rank_list(CIP_list))
+                if chiral_tag:
+                    atom.SetChiralTag(Chem.rdchem.ChiralType.CHI_TETRAHEDRAL_CW)
+                else:
+                    atom.SetChiralTag(Chem.rdchem.ChiralType.CHI_TETRAHEDRAL_CCW)
+
     def ConnectivityToSmiles(self, node_vector, adjacency_matrix):
         """
         Generate a SMILES string from the molecular graph.
@@ -74,7 +105,7 @@ class MoleculeQuantumStateGenerator():
             if atom_type_idx == 0:
                 continue
             a = Chem.Atom(self.idx_to_atom_type[atom_type_idx])
-            a.SetAtomMapNum(i)
+            a.SetAtomMapNum(i+1)
             molIdx = mol.AddAtom(a)
             mapping_num_2_molIdx.update({i: molIdx})
         # add bonds between adjacent atoms, only traverse half the matrix
@@ -111,11 +142,14 @@ class MoleculeQuantumStateGenerator():
                     Chem.SanitizeMol(mol)
                 except:
                     return None
-        else:
-            pass
+        
+        Chem.AssignStereochemistry(mol, flagPossibleStereoCenters=True)
+        if self.stereo_chiral:
+            self._set_chiral_atom(mol)
+            # self._set_stereo_bond(mol)
         for atom in mol.GetAtoms():
             atom.SetAtomMapNum(0)
-        return Chem.MolToSmiles(mol)
+        return Chem.MolToSmiles(mol, canonical=True)
 
     def ConnectivityToQuantumState(self, node_vector, adjacency_matrix):
         """

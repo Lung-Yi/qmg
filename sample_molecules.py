@@ -40,7 +40,7 @@ if __name__ == "__main__":
     mg = MoleculeGenerator(args.num_heavy_atom, temperature=args.temperature, 
                            remove_bond_disconnection=not args.allow_bond_disconnection, chemistry_constraint=not args.no_chemistry_constraint)
     smiles_dict, validity, diversity = mg.sample_molecule(num_sample=args.num_sample, random_seed=args.random_seed)
-    
+    print(smiles_dict)
     # logger.info(smiles_dict)
     logger.info("Validity: {:.2f}%".format(validity * 100))
     logger.info("Diversity: {:.2f}%".format(diversity * 100))
