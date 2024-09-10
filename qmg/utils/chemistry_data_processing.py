@@ -62,36 +62,69 @@ class MoleculeQuantumStateGenerator():
             adjacency_matrix[j][i] = self.bond_type_to_idx[bond.GetBondType()]
         return node_vector, adjacency_matrix
 
+    def _rank_list(self, lst):
+        sorted_list = sorted(enumerate(lst), key=lambda x: x[1])
+        rank = [0] * len(lst)
+        for i, (original_index, _) in enumerate(sorted_list):
+            rank[original_index] = i + 1
+        return rank
+
+    def _can_sort_with_even_swaps(self, list1, list2):
+        def count_inversions(lst):
+            inversions = 0
+            for i in range(len(lst)):
+                for j in range(i + 1, len(lst)):
+                    if lst[i] > lst[j]:
+                        inversions += 1
+            return inversions
+        inversions_list1 = count_inversions(list1)
+        inversions_list2 = count_inversions(list2)
+        return (inversions_list1 - inversions_list2) % 2 == 0
+
     def _set_chiral_atom(self, mol):
         """ Based on the atom-mapping and CIP information to determine the R/S chirality. """
-        def rank_list(lst):
-            sorted_list = sorted(enumerate(lst), key=lambda x: x[1])
-            rank = [0] * len(lst)
-            for i, (original_index, _) in enumerate(sorted_list):
-                rank[original_index] = i + 1
-            return rank
-
-        def can_sort_with_even_swaps(list1, list2):
-            def count_inversions(lst):
-                inversions = 0
-                for i in range(len(lst)):
-                    for j in range(i + 1, len(lst)):
-                        if lst[i] > lst[j]:
-                            inversions += 1
-                return inversions
-            inversions_list1 = count_inversions(list1)
-            inversions_list2 = count_inversions(list2)
-            return (inversions_list1 - inversions_list2) % 2 == 0
-
         for atom in mol.GetAtoms():
             if atom.GetPropsAsDict(True, False).get("_ChiralityPossible", 0):
                 atom_map_list = [int(neighbor.GetProp('molAtomMapNumber')) for neighbor in atom.GetNeighbors()]
                 CIP_list = [int(neighbor.GetProp('_CIPRank')) for neighbor in atom.GetNeighbors()]
-                chiral_tag = can_sort_with_even_swaps(rank_list(atom_map_list), rank_list(CIP_list))
+                chiral_tag = self._can_sort_with_even_swaps(self._rank_list(atom_map_list), self._rank_list(CIP_list))
                 if chiral_tag:
                     atom.SetChiralTag(Chem.rdchem.ChiralType.CHI_TETRAHEDRAL_CW)
                 else:
                     atom.SetChiralTag(Chem.rdchem.ChiralType.CHI_TETRAHEDRAL_CCW)
+
+    def _determine_bond_stereo(self, bond):
+        begin_atom = bond.GetBeginAtom()
+        begin_atom_map_number = int(begin_atom.GetProp('molAtomMapNumber'))
+        end_atom = bond.GetEndAtom()
+        end_atom_map_number = int(end_atom.GetProp('molAtomMapNumber'))
+        begin_atom_neighbor_map = [int(a.GetProp('molAtomMapNumber')) for a in begin_atom.GetNeighbors()]
+        begin_atom_neighbor_map.remove(end_atom_map_number)
+        end_atom_neighbor_map = [int(a.GetProp('molAtomMapNumber')) for a in end_atom.GetNeighbors()]
+        end_atom_neighbor_map.remove(begin_atom_map_number)
+        if (len(begin_atom_neighbor_map) == 1) and (len(end_atom_neighbor_map) == 1):
+            if abs(begin_atom_neighbor_map[0] - begin_atom_map_number) == abs(end_atom_neighbor_map[0] - end_atom_map_number):
+                bond.SetStereo(Chem.rdchem.BondStereo.STEREOZ)
+            else:
+                bond.SetStereo(Chem.rdchem.BondStereo.STEREOE)
+        else:
+            begin_CIP_list = [int(neighbor.GetProp('_CIPRank')) for neighbor in begin_atom.GetNeighbors() 
+                            if int(neighbor.GetProp('molAtomMapNumber')) != end_atom_map_number]
+            end_CIP_list = [int(neighbor.GetProp('_CIPRank')) for neighbor in end_atom.GetNeighbors()
+                            if int(neighbor.GetProp('molAtomMapNumber')) != begin_atom_map_number]
+            if self._can_sort_with_even_swaps(self._rank_list(begin_atom_neighbor_map), self._rank_list(begin_CIP_list)) == \
+                self._can_sort_with_even_swaps(self._rank_list(end_atom_neighbor_map), self._rank_list(end_CIP_list)):
+                bond.SetStereo(Chem.rdchem.BondStereo.STEREOZ)
+            else:
+                bond.SetStereo(Chem.rdchem.BondStereo.STEREOE)
+        return
+
+    def _set_stereo_bond(self, mol):
+        Chem.FindPotentialStereoBonds(mol,cleanIt=True)
+        for bond in mol.GetBonds():
+            if bond.GetStereo() == Chem.rdchem.BondStereo.STEREOANY:
+                self._determine_bond_stereo(bond)
+        return
 
     def ConnectivityToSmiles(self, node_vector, adjacency_matrix):
         """
@@ -147,7 +180,7 @@ class MoleculeQuantumStateGenerator():
         Chem.AssignStereochemistry(mol, flagPossibleStereoCenters=True)
         if self.stereo_chiral:
             self._set_chiral_atom(mol)
-            # self._set_stereo_bond(mol)
+            self._set_stereo_bond(mol)
         for atom in mol.GetAtoms():
             atom.SetAtomMapNum(0)
         return Chem.MolToSmiles(mol, canonical=True)
