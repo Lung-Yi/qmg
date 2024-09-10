@@ -63,6 +63,7 @@ class MoleculeQuantumStateGenerator():
         return node_vector, adjacency_matrix
 
     def _set_chiral_atom(self, mol):
+        """ Based on the atom-mapping and CIP information to determine the R/S chirality. """
         def rank_list(lst):
             sorted_list = sorted(enumerate(lst), key=lambda x: x[1])
             rank = [0] * len(lst)
