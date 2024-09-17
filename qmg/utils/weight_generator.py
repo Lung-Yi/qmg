@@ -102,8 +102,8 @@ class ConditionalWeightsGenerator():
         self.used_part = used_part
 
     def _apply_disable_connectivity(self):
-        fixed_part = self.used_part
         for map_num in self.disable_connectivity_position:
+            fixed_part = self.used_part
             for f_idx in range(self.num_fixed_atoms + 1, self.num_heavy_atom + 1):
                 fixed_part += 3  # atom 3 weights
                 first_gate_index = fixed_part + map_num - 1
@@ -152,5 +152,9 @@ class ConditionalWeightsGenerator():
         return random_weight_vector
 
 if __name__ == "__main__":
-    cwg = ConditionalWeightsGenerator(5, smarts="[O:1]1[C:2][C:3]1", disable_connectivity_position = [1])
-    print(cwg.generate_conditional_random_weights(1))
+    # cwg = ConditionalWeightsGenerator(num_heavy_atom=5, smarts="[O:1]1[C:2][C:3]1", disable_connectivity_position = [1])
+    # print(cwg.generate_conditional_random_weights(random_seed=1))
+    smarts = "[C:1][C:2](=[O:3])[C:4]"
+    disable_connectivity_position = [2, 3]
+    cwg = ConditionalWeightsGenerator(num_heavy_atom=6, smarts=smarts, disable_connectivity_position = disable_connectivity_position)
+    print(cwg.generate_conditional_random_weights(random_seed=1))
