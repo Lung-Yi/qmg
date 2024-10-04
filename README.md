@@ -5,13 +5,16 @@ This repository demonstrates the useage of quantum circuits for the generation o
 This repository requires to operate on **Linux** operating system.
 
 ## Python Dependencies
-* Python (version >= 3.7)
-* qiskit (version <= 0.46.2)
-* qiskit-aer (version <= 0.14.2)
-* rdkit (version >= 2024.3.3)
-* matplotlib (version >=3.3.4)
-* numpy (version >= 1.16.4)
-* pandas (version >= 2.0.3)
+* Python (version >= 3.8)
+* qiskit (version >= 1.2.4)
+* qiskit-aer (version >= 0.15.1)
+* qiskit-ibm-runtime (version >= 0.30.0)
+* qiskit-qasm3-import (version >= 0.5.0)
+* rdkit (version >= 2024.3.5)
+* matplotlib (version >=3.9.2)
+* pylatexenc (version >= 2.10)
+* numpy (version >= 2.1.1)
+* pandas (version >= 2.2.3)
 
 ## Example script for unconditional generation of small molecules (with number of heavy atoms <=5).
 

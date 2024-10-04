@@ -1,5 +1,6 @@
 from qiskit.circuit import QuantumCircuit, QuantumRegister, ClassicalRegister
 import qiskit.circuit.library as qulib
+from qiskit.qasm3 import dump, dumps, Exporter
 import numpy as np
 import random
 from typing import List, Union
@@ -161,7 +162,12 @@ class DynamicCircuitBuilder():
         return self.qc
 
 if __name__=="__main__":
-    qc_generator = DynamicCircuitBuilder(num_heavy_atom=3)
+    qc_generator = DynamicCircuitBuilder(num_heavy_atom=5)
     dqc = qc_generator.generate_quantum_circuit()
-    print(dqc.draw(output="text"))
+    # print(dqc.draw(output="text"))
+    # f = open("my_file.txt", 'w')
+    # dump(dqc, f)
+    # f.close()
+    exp = Exporter(allow_aliasing=True)
+    print(exp.dumps(dqc))
 

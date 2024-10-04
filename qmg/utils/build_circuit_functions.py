@@ -5,6 +5,7 @@ import random
 from typing import List, Union
 
 class CircuitBuilder():
+    """ This normal circuit does not support the function of conditinal weight or molecular structure generation. """
     def __init__(self, num_heavy_atom:int, temperature:float=0.2, remove_bond_disconnection:bool=True, chemistry_constraint:bool=True):
         self.num_heavy_atom = num_heavy_atom
         self.temperature = temperature
