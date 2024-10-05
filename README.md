@@ -5,7 +5,7 @@ This repository demonstrates the useage of quantum circuits for the generation o
 This repository requires to operate on **Linux** operating system.
 
 ## Python Dependencies
-* Python (version >= 3.8)
+* Python (version >= 3.12)
 * qiskit (version >= 1.2.4)
 * qiskit-aer (version >= 0.15.1)
 * qiskit-ibm-runtime (version >= 0.30.0)
