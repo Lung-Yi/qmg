@@ -7,7 +7,7 @@ from collections import Counter
 from rdkit import RDLogger
 RDLogger.DisableLog('rdApp.*')
 
-from utils import MoleculeQuantumStateGenerator, CircuitBuilder, DynamicCircuitBuilder, ConditionalWeightsGenerator
+from .utils import MoleculeQuantumStateGenerator, CircuitBuilder, DynamicCircuitBuilder, ConditionalWeightsGenerator
 
 class MoleculeGenerator():
     def __init__(self, num_heavy_atom:int, all_weight_vector:Union[List[float], np.ndarray]=None, backend_name:str="qiskit_aer",
@@ -48,10 +48,10 @@ class MoleculeGenerator():
         self.sampler = Sampler(mode=self.backend)
         self.sampler.options.default_shots = num_sample
         results = self.sampler.run([self.transpiled_qc]).result()
-        if self.dynamic_circuit:
-            string_results = results[0].data.c0.get_bitstrings()
-        else:
-            string_results = results[0].data.c.get_bitstrings()
+        # if self.dynamic_circuit:
+        #     string_results = results[0].data.c0.get_bitstrings()
+        # else:
+        string_results = results[0].data.c.get_bitstrings()
         counts = dict(Counter(string_results))
 
         smiles_dict = {}

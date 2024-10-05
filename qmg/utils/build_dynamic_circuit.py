@@ -15,7 +15,7 @@ class DynamicCircuitBuilder():
         self.num_qubits = 4 + (num_heavy_atom-1) * 2
         self.num_clbits = num_heavy_atom * (num_heavy_atom + 1)
         self.qubits = QuantumRegister(self.num_qubits)
-        self.clbits = ClassicalRegister(self.num_clbits)
+        self.clbits = ClassicalRegister(self.num_clbits, name="c")
         self.length_all_weight_vector = int(8 + (self.num_heavy_atom - 2)*(self.num_heavy_atom + 3) * 3 / 2)
 
     def initialize_quantum_circuit(self):

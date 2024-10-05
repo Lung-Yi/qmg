@@ -25,8 +25,8 @@ RDLogger.DisableLog('rdApp.*')
 
 # parameter settings
 num_heavy_atom = 5
-num_sample = 20000
-random_seed = 0
+num_sample = 10000
+random_seed = 7
 
 mg = MoleculeGenerator(num_heavy_atom) 
 smiles_dict, validity, diversity = mg.sample_molecule(num_sample, ransom_seed)
@@ -35,9 +35,9 @@ print("Validity: {:.2f}%".format(validity*100))
 print("Diversity: {:.2f}%".format(diversity*100))
 
 # Example outputs:
-# {'NOn1[nH]o1': 1, None: 4401, 'OC1NNO1': 18, 'C1CO1': 1, 'NCCNO': 1, 'ON1ONO1': 2, 'C#[N+][O-]': 1, 'ONN1CO1': 4, ...
-# Validity: 78.00%
-# Diversity: 3.17%
+# {'NO': 915, None: 695, 'CC': 1659, 'O': 288, 'CN': 886, 'C': 3427, 'NCNCN': 51, 'CNNNN': 1, 'N[C@H]1CCN1': 37, ...
+# Validity: 93.05%
+# Diversity: 2.75%
 ```
 
 
@@ -65,7 +65,7 @@ print("Validity: {:.2f}%".format(validity*100))
 print("Diversity: {:.2f}%".format(diversity*100))
 
 # Example outputs:
-# {'CN(N)C1OC1N': 1, 'NC12OC1n1on12': 1, 'NNNC12OC1O2': 1, 'CNOCC1CO1': 1, 'NN(O)C1(N)CO1': 16, 'NNCCC1CO1': 1, 'NN1OC2OC21': 1, 'OC1=NC2(CO2)N1': 1,...}
-# Validity: 62.00%
-# Diversity: 4.41%
+# {None: 3882, 'CON[C@@]1(N)CO1': 111, 'NCNN[C@@H]1CO1': 47, 'ON[C@@H]1CO1': 946, 'NON[C@@]1(N)CO1': 246, 'NON[C@H]1O[C@@H]1N': 33, 'NNON[C@@H]1CO1': 246, ...
+# Validity: 61.18%
+# Diversity: 6.12%
 ```
