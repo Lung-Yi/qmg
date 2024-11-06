@@ -9,6 +9,12 @@ RDLogger.DisableLog('rdApp.*')
 
 from .utils import MoleculeQuantumStateGenerator, CircuitBuilder, DynamicCircuitBuilder, ConditionalWeightsGenerator
 
+def get_token(file_path):
+    with open(file_path) as f:
+        data = f.read()
+    token = data.strip()
+    return token
+
 class MoleculeGenerator():
     def __init__(self, num_heavy_atom:int, all_weight_vector:Union[List[float], np.ndarray]=None, backend_name:str="qiskit_aer",
                  temperature:float=0.2, dynamic_circuit:bool=True, remove_bond_disconnection:bool=True, chemistry_constraint:bool=True):
@@ -29,6 +35,12 @@ class MoleculeGenerator():
         if self.backend_name == "qiskit_aer":
             from qiskit_aer import AerSimulator
             self.backend = AerSimulator()
+        elif self.backend_name in ["ibm", "ibmq"]:
+            from qiskit_ibm_runtime import QiskitRuntimeService
+            my_token = get_token("../docs/ibmq_tokens.txt")
+            service = QiskitRuntimeService(channel="ibm_quantum", token=my_token)
+            self.backend = service.least_busy(simulator=False, operational=True)
+            print("Using IBM Quantum backend:", self.backend)
         self.pm = generate_preset_pass_manager(backend=self.backend, optimization_level=1)
         
     def generate_quantum_circuit(self, random_seed):
@@ -47,7 +59,11 @@ class MoleculeGenerator():
         self.transpiled_qc = self.pm.run(self.qc)
         self.sampler = Sampler(mode=self.backend)
         self.sampler.options.default_shots = num_sample
-        results = self.sampler.run([self.transpiled_qc]).result()
+        job = self.sampler.run([self.transpiled_qc])
+        if self.backend_name in ["ibm", "ibmq"]:
+            print(f">>> Job ID: {job.job_id()}")
+            return
+        results = job.result()
         # if self.dynamic_circuit:
         #     string_results = results[0].data.c0.get_bitstrings()
         # else:
