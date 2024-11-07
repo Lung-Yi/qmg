@@ -68,13 +68,13 @@ if __name__ == "__main__":
     logger.info(f"# of samples: {args.num_sample}")
     logger.info(f"smarts: {args.smarts}")
     logger.info(f"disable_connectivity_position: {args.disable_connectivity_position}")
-    logger.info("Using cuda:", torch.cuda.is_available())
+    logger.info(f"Using cuda: {torch.cuda.is_available()}")
 
     cwg = ConditionalWeightsGenerator(args.num_heavy_atom, smarts=args.smarts, disable_connectivity_position=args.disable_connectivity_position)
     random_weight_vector = cwg.generate_conditional_random_weights(random_seed=0)
 
     number_flexible_parameters = len(random_weight_vector[cwg.parameters_indicator == 0.])
-    logger.info("Number of flexible parameters:", number_flexible_parameters)
+    logger.info(f"Number of flexible parameters: {number_flexible_parameters}")
     random_weight_vector[cwg.parameters_indicator == 0.] = np.random.rand(len(random_weight_vector[cwg.parameters_indicator == 0.]))
 
 
@@ -128,13 +128,16 @@ if __name__ == "__main__":
             inputs = cwg.apply_chemistry_constraint(inputs)
         mg = MoleculeGenerator(args.num_heavy_atom, all_weight_vector=inputs)
         smiles_dict, validity, diversity = mg.sample_molecule(args.num_sample)
+        qed_score = fc.calc_score(smiles_dict)
+        logger.info("qed: {:.3f}%".format(qed_score))
         logger.info("Validity: {:.2f}%".format(validity * 100))
         logger.info("Diversity: {:.2f}%".format(diversity * 100))
         # In our case, standard error is 0, since we are computing a synthetic function.
         # Set standard error to None if the noise level is unknown.
-        return {"qed": (fc.calc_score(smiles_dict), None), "uniqueness": (diversity, None)}
+        return {"qed": (qed_score, None), "uniqueness": (diversity, None)}
 
     for i in range(args.num_iterations + 5):
+        logger.info(f"Iteration number: {i}")
         parameters, trial_index = ax_client.get_next_trial()
         # Local evaluation here can be replaced with deployment to external system.
         ax_client.complete_trial(trial_index=trial_index, raw_data=evaluate(parameters))
