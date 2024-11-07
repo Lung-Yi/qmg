@@ -150,6 +150,29 @@ class ConditionalWeightsGenerator():
             pass # do nothing
         
         return random_weight_vector
+    
+    def apply_chemistry_constraint(self, random_weight_vector: np.array, temperature:float=0.2):
+        new_random_weight_vector = np.copy(random_weight_vector)
+        fixed_part = self.used_part
+        for f_idx in range(self.num_fixed_atoms + 1, self.num_heavy_atom + 1):
+            fixed_part += 3  # atom 3 weights
+            first_gate_index_list = [fixed_part + i for i in range(f_idx-1)]
+            constrained_first_gate_index_list = [idx for idx in first_gate_index_list if not self.parameters_indicator[idx]]
+            new_random_weight_vector[constrained_first_gate_index_list] = self.softmax_temperature(new_random_weight_vector[constrained_first_gate_index_list],
+                                                                                                temperature)
+
+            second_gate_index_list = [fixed_part + (f_idx-1) + 2*i for i in range(f_idx-1)]
+            constrained_second_gate_index_list = [idx for idx in second_gate_index_list if not self.parameters_indicator[idx]]
+            new_random_weight_vector[constrained_second_gate_index_list]*= 0.5
+
+            third_gate_index_list = [fixed_part + (f_idx-1) + 2*i+1 for i in range(f_idx-1)]
+            constrained_third_gate_index_list = [idx for idx in third_gate_index_list if not self.parameters_indicator[idx]]
+            new_random_weight_vector[constrained_third_gate_index_list] *= 0.5
+            new_random_weight_vector[constrained_third_gate_index_list] += 0.5
+
+            fixed_part += (f_idx - 1) * 3
+
+        return new_random_weight_vector
 
 if __name__ == "__main__":
     # cwg = ConditionalWeightsGenerator(num_heavy_atom=5, smarts="[O:1]1[C:2][C:3]1", disable_connectivity_position = [1])
