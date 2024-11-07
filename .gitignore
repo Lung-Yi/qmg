@@ -1,6 +1,6 @@
 jupyterlab-qiskit/
 test_development/*/
-job/
+job_slurm/
 qml_hw2/
 results/
 results_without_constraint/

@@ -1,9 +1,8 @@
 from qmg.generator import MoleculeGenerator
-from qmg.utils import ConditionalWeightsGenerator
+from qmg.utils import ConditionalWeightsGenerator, FitnessCalculator
 from rdkit import RDLogger
 import numpy as np
-from rdkit import Chem
-from rdkit.Chem import Descriptors
+
 from ax.service.ax_client import AxClient
 from ax.service.utils.instantiation import ObjectiveProperties
 from ax.modelbridge.generation_strategy import GenerationStrategy, GenerationStep
@@ -27,27 +26,6 @@ def setup_logger(file_name):
     fh.setFormatter(formatter)
     logger.addHandler(fh)
     return logger
-
-class FitnessCalculator():
-    def __init__(self, task, distribution_learning=True):
-        self.task = task
-        self.distribution_learning = distribution_learning
-
-    def calc_property(self, mol):
-        if self.task == "qed":
-            return Descriptors.qed(mol)
-
-    def calc_score(self, smiles_dict: dict):
-        total_count = 0
-        property_sum = 0
-        for smiles, count in smiles_dict.items():
-            total_count += count
-            mol = Chem.MolFromSmiles(str(smiles))
-            if mol == None:
-                continue
-            else:
-                property_sum += self.calc_property(mol) * count
-        return property_sum / total_count
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
@@ -129,7 +107,7 @@ if __name__ == "__main__":
         mg = MoleculeGenerator(args.num_heavy_atom, all_weight_vector=inputs)
         smiles_dict, validity, diversity = mg.sample_molecule(args.num_sample)
         qed_score = fc.calc_score(smiles_dict)
-        logger.info("qed: {:.3f}%".format(qed_score))
+        logger.info("qed: {:.3f}".format(qed_score))
         logger.info("Validity: {:.2f}%".format(validity * 100))
         logger.info("Diversity: {:.2f}%".format(diversity * 100))
         # In our case, standard error is 0, since we are computing a synthetic function.
@@ -142,8 +120,8 @@ if __name__ == "__main__":
         # Local evaluation here can be replaced with deployment to external system.
         ax_client.complete_trial(trial_index=trial_index, raw_data=evaluate(parameters))
 
-    trial_df = ax_client.get_trials_data_frame()
-    trial_df.to_csv(f"results_constrained_bo/num_{args.num_heavy_atom}.csv", index=False)
+        trial_df = ax_client.get_trials_data_frame()
+        trial_df.to_csv(f"results_constrained_bo/num_{args.num_heavy_atom}.csv", index=False)
 
     
     
