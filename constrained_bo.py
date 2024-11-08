@@ -39,9 +39,9 @@ if __name__ == "__main__":
     args = parser.parse_args()
 
     if args.no_chemistry_constraint:
-        data_dir = "results_chemistry_constraint_bo"
-    else:
         data_dir = "results_unconstrained_bo"
+    else:
+        data_dir = "results_chemistry_constraint_bo"
     file_name = f"{data_dir}/{args.task_name}.log"
 
     logger = setup_logger(file_name)
