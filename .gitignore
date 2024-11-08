@@ -11,3 +11,4 @@ qmg/models_old/
 qmg/train_old/
 docs_old/
 docs/ibmq_tokens.txt
+results_*

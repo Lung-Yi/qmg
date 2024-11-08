@@ -29,6 +29,7 @@ def setup_logger(file_name):
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
+    parser.add_argument('--task_name', type=str,)
     parser.add_argument('--num_heavy_atom', type=int, default=5)
     parser.add_argument('--num_sample', type=int, default=10000)
     parser.add_argument('--smarts', type=str)
@@ -38,10 +39,13 @@ if __name__ == "__main__":
     args = parser.parse_args()
 
     if args.no_chemistry_constraint:
-        file_name = f"results_constrained_bo/num_{args.num_heavy_atom}_atoms_sample_{args.num_sample}.log"
+        data_dir = "results_chemistry_constraint_bo"
     else:
-        file_name = f"results_constrained_bo/num_{args.num_heavy_atom}_atoms_sample_{args.num_sample}.log"
+        data_dir = "results_unconstrained_bo"
+    file_name = f"{data_dir}/{args.task_name}.log"
+
     logger = setup_logger(file_name)
+    logger.info(f"Task name: {args.task_name}")
     logger.info(f"# of heavy atoms: {args.num_heavy_atom}")
     logger.info(f"# of samples: {args.num_sample}")
     logger.info(f"smarts: {args.smarts}")
@@ -54,7 +58,6 @@ if __name__ == "__main__":
     number_flexible_parameters = len(random_weight_vector[cwg.parameters_indicator == 0.])
     logger.info(f"Number of flexible parameters: {number_flexible_parameters}")
     random_weight_vector[cwg.parameters_indicator == 0.] = np.random.rand(len(random_weight_vector[cwg.parameters_indicator == 0.]))
-
 
     fc = FitnessCalculator(task="qed")
 
@@ -110,18 +113,16 @@ if __name__ == "__main__":
         logger.info("qed: {:.3f}".format(qed_score))
         logger.info("Validity: {:.2f}%".format(validity * 100))
         logger.info("Diversity: {:.2f}%".format(diversity * 100))
-        # In our case, standard error is 0, since we are computing a synthetic function.
         # Set standard error to None if the noise level is unknown.
         return {"qed": (qed_score, None), "uniqueness": (diversity, None)}
 
     for i in range(args.num_iterations + 5):
         logger.info(f"Iteration number: {i}")
         parameters, trial_index = ax_client.get_next_trial()
-        # Local evaluation here can be replaced with deployment to external system.
         ax_client.complete_trial(trial_index=trial_index, raw_data=evaluate(parameters))
 
         trial_df = ax_client.get_trials_data_frame()
-        trial_df.to_csv(f"results_constrained_bo/num_{args.num_heavy_atom}.csv", index=False)
+        trial_df.to_csv(f"{data_dir}/{args.task_name}.csv", index=False)
 
     
     
