@@ -32,3 +32,14 @@ class FitnessCalculator():
                 property = self.calc_property(mol)
                 data_list += [property] * count
         return data_list
+    
+    def generate_property_distribution(self, smiles_dict: dict):
+        data_list = []
+        for smiles, count in smiles_dict.items():
+            mol = Chem.MolFromSmiles(str(smiles))
+            if mol == None:
+                continue
+            else:
+                property = self.calc_property(mol)
+                data_list += [property]
+        return data_list
