@@ -118,11 +118,11 @@ if __name__ == "__main__":
         if args.smarts:
             inputs = random_weight_vector
             inputs[cwg.parameters_indicator == 0.] = partial_inputs
-            if not args.no_chemistry_constraint:
-                inputs = cwg.apply_chemistry_constraint(inputs)
-            mg = MoleculeGenerator(args.num_heavy_atom, all_weight_vector=inputs)
         else:
-            mg = MoleculeGenerator(args.num_heavy_atom, all_weight_vector=partial_inputs)
+            inputs = partial_inputs
+        if not args.no_chemistry_constraint:
+            inputs = cwg.apply_chemistry_constraint(inputs)
+        mg = MoleculeGenerator(args.num_heavy_atom, all_weight_vector=inputs)
         smiles_dict, validity, diversity = mg.sample_molecule(args.num_sample)
         score_dict = fitness_calculator.evaluate(smiles_dict)
         for task, objective in zip(args.task, args.objective):

@@ -29,6 +29,9 @@ class ConditionalWeightsGenerator():
             Chem.Kekulize(self.mol, clearAromaticFlags=True)
             self._initialize_maps()
             self._generate_constrained_parameters()
+        else:
+            self.num_fixed_atoms = 0
+            self.used_part = 8
 
     def _initialize_maps(self):
         for atom in self.mol.GetAtoms():
@@ -155,7 +158,7 @@ class ConditionalWeightsGenerator():
     def apply_chemistry_constraint(self, random_weight_vector: np.array, temperature:float=0.2):
         new_random_weight_vector = np.copy(random_weight_vector)
         fixed_part = self.used_part
-        for f_idx in range(self.num_fixed_atoms + 1, self.num_heavy_atom + 1):
+        for f_idx in range(max(self.num_fixed_atoms, 2) + 1, self.num_heavy_atom + 1):
             fixed_part += 3  # atom 3 weights
             first_gate_index_list = [fixed_part + i for i in range(f_idx-1)]
             constrained_first_gate_index_list = [idx for idx in first_gate_index_list if not self.parameters_indicator[idx]]
