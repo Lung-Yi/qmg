@@ -1,5 +1,9 @@
+"""
+Multi-objective Bayesian optimization for conditional quantum generator.
+"""
+
 from qmg.generator import MoleculeGenerator
-from qmg.utils import ConditionalWeightsGenerator, FitnessCalculator
+from qmg.utils import ConditionalWeightsGenerator, FitnessCalculatorWrapper
 from rdkit import RDLogger
 import numpy as np
 
@@ -30,6 +34,10 @@ def setup_logger(file_name):
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
     parser.add_argument('--task_name', type=str,)
+    parser.add_argument('--task', nargs='+', type=str, 
+                        choices=["validity", "uniqueness", "qed", "logP", "tpsa", "sascore", "SAscore"], default=None)
+    parser.add_argument('--condition', nargs='+', type=str, default=None) # can be None or float number
+    parser.add_argument('--objective', nargs='+', type=str, choices=["minimize", "maximize"], default=None)
     parser.add_argument('--num_heavy_atom', type=int, default=5)
     parser.add_argument('--num_sample', type=int, default=10000)
     parser.add_argument('--smarts', type=str)
@@ -38,6 +46,7 @@ if __name__ == "__main__":
     parser.add_argument('--num_iterations', type=int)
     args = parser.parse_args()
 
+    assert len(args.task) == len(args.condition) == len(args.objective)
     if args.no_chemistry_constraint:
         data_dir = "results_unconstrained_bo"
     else:
@@ -46,6 +55,9 @@ if __name__ == "__main__":
 
     logger = setup_logger(file_name)
     logger.info(f"Task name: {args.task_name}")
+    logger.info(f"Task: {args.task}")
+    logger.info(f"Condition: {args.condition}")
+    logger.info(f"objective: {args.objective}")
     logger.info(f"# of heavy atoms: {args.num_heavy_atom}")
     logger.info(f"# of samples: {args.num_sample}")
     logger.info(f"smarts: {args.smarts}")
@@ -53,13 +65,16 @@ if __name__ == "__main__":
     logger.info(f"Using cuda: {torch.cuda.is_available()}")
 
     cwg = ConditionalWeightsGenerator(args.num_heavy_atom, smarts=args.smarts, disable_connectivity_position=args.disable_connectivity_position)
-    random_weight_vector = cwg.generate_conditional_random_weights(random_seed=0)
+    if args.smarts:
+        random_weight_vector = cwg.generate_conditional_random_weights(random_seed=0)
+    else:
+        random_weight_vector = np.zeros(cwg.length_all_weight_vector)
 
     number_flexible_parameters = len(random_weight_vector[cwg.parameters_indicator == 0.])
     logger.info(f"Number of flexible parameters: {number_flexible_parameters}")
     random_weight_vector[cwg.parameters_indicator == 0.] = np.random.rand(len(random_weight_vector[cwg.parameters_indicator == 0.]))
 
-    fc = FitnessCalculator(task="qed")
+    fitness_calculator = FitnessCalculatorWrapper(task=args.task, condition=args.condition)
 
     ######################## Generation Strategy ###################################
     model_dict = {'MOO': Models.MOO, 'GPEI': Models.GPEI, 'SAASBO': Models.SAASBO,}
@@ -83,7 +98,7 @@ if __name__ == "__main__":
     )
     ax_client = AxClient(random_seed = 42, generation_strategy = gs) # set the random seed for BO for reproducibility
     ax_client.create_experiment(
-        name="moo_experiment",
+        name=args.task_name,
         parameters=[
             {
                 "name": f"x{i+1}",
@@ -93,28 +108,27 @@ if __name__ == "__main__":
             }
             for i in range(number_flexible_parameters)
         ],
-        objectives={
-            "qed": ObjectiveProperties(minimize=False,),
-            "uniqueness": ObjectiveProperties(minimize=False,),
-        },
+        objectives={task: ObjectiveProperties(minimize = objective=="minimize",) for task, objective in zip(args.task, args.objective)},
         overwrite_existing_experiment=True,
         is_test=True,
     )
 
     def evaluate(parameters):
         partial_inputs = np.array([parameters.get(f"x{i+1}") for i in range(number_flexible_parameters)])
-        inputs = random_weight_vector
-        inputs[cwg.parameters_indicator == 0.] = partial_inputs
-        if not args.no_chemistry_constraint:
-            inputs = cwg.apply_chemistry_constraint(inputs)
-        mg = MoleculeGenerator(args.num_heavy_atom, all_weight_vector=inputs)
+        if args.smarts:
+            inputs = random_weight_vector
+            inputs[cwg.parameters_indicator == 0.] = partial_inputs
+            if not args.no_chemistry_constraint:
+                inputs = cwg.apply_chemistry_constraint(inputs)
+            mg = MoleculeGenerator(args.num_heavy_atom, all_weight_vector=inputs)
+        else:
+            mg = MoleculeGenerator(args.num_heavy_atom, all_weight_vector=partial_inputs)
         smiles_dict, validity, diversity = mg.sample_molecule(args.num_sample)
-        qed_score = fc.calc_score(smiles_dict)
-        logger.info("qed: {:.3f}".format(qed_score))
-        logger.info("Validity: {:.2f}%".format(validity * 100))
-        logger.info("Diversity: {:.2f}%".format(diversity * 100))
+        score_dict = fitness_calculator.evaluate(smiles_dict)
+        for task, objective in zip(args.task, args.objective):
+            logger.info(f"{task} ({objective}): {score_dict[task][0]:.3f}")
         # Set standard error to None if the noise level is unknown.
-        return {"qed": (qed_score, None), "uniqueness": (diversity, None)}
+        return score_dict
 
     for i in range(args.num_iterations + 5):
         logger.info(f"Iteration number: {i}")
@@ -123,7 +137,3 @@ if __name__ == "__main__":
 
         trial_df = ax_client.get_trials_data_frame()
         trial_df.to_csv(f"{data_dir}/{args.task_name}.csv", index=False)
-
-    
-    
-

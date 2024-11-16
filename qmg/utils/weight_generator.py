@@ -5,7 +5,7 @@ from typing import List
 
 class ConditionalWeightsGenerator():
     """ Generate the corresponding weights in dynamic quantum circuit, based on the provided Molecule SMARTS representation. """
-    def __init__(self, num_heavy_atom:int, smarts, disable_connectivity_position:List[int]=[]):
+    def __init__(self, num_heavy_atom:int, smarts=None, disable_connectivity_position:List[int]=[]):
         self.num_heavy_atom = num_heavy_atom
         self.length_all_weight_vector = int(8 + (num_heavy_atom - 2) * (num_heavy_atom + 3) * 3 / 2)
         self.parameters_value = np.zeros(self.length_all_weight_vector)
@@ -23,11 +23,12 @@ class ConditionalWeightsGenerator():
         self.disable_connectivity_position = disable_connectivity_position
         self.mapnum_atom_dict = {}
         self.mapnum_bond_dict = {}
-        self.mol = Chem.MolFromSmiles(smarts)
-        self.num_fixed_atoms = self.mol.GetNumAtoms()
-        Chem.Kekulize(self.mol, clearAromaticFlags=True)
-        self._initialize_maps()
-        self._generate_constrained_parameters()
+        if smarts:
+            self.mol = Chem.MolFromSmiles(smarts)
+            self.num_fixed_atoms = self.mol.GetNumAtoms()
+            Chem.Kekulize(self.mol, clearAromaticFlags=True)
+            self._initialize_maps()
+            self._generate_constrained_parameters()
 
     def _initialize_maps(self):
         for atom in self.mol.GetAtoms():
