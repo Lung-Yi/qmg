@@ -1,11 +1,12 @@
 """
-Multi-objective Bayesian optimization for conditional quantum generator.
+Multi-objective Bayesian optimization for conditional quantum generator (further optimization).
 """
 
 from qmg.generator import MoleculeGenerator
 from qmg.utils import ConditionalWeightsGenerator, FitnessCalculatorWrapper
 from rdkit import RDLogger
 import numpy as np
+import pandas as pd
 
 from ax.service.ax_client import AxClient
 from ax.service.utils.instantiation import ObjectiveProperties
@@ -53,7 +54,11 @@ if __name__ == "__main__":
         data_dir = "results_chemistry_constraint_bo"
     file_name = f"{data_dir}/{args.task_name}.log"
 
+    previous_csv_path = f"{data_dir}/{args.task_name}.csv"
+    previous_data = pd.read_csv(previous_csv_path)
     logger = setup_logger(file_name)
+    logger.info(f"*** Further optimization based on the previous results ***")
+    logger.info(f"Previous data path: {previous_csv_path}")
     logger.info(f"Task name: {args.task_name}")
     logger.info(f"Task: {args.task}")
     logger.info(f"Condition: {args.condition}")
@@ -76,17 +81,11 @@ if __name__ == "__main__":
 
     fitness_calculator = FitnessCalculatorWrapper(task=args.task, condition=args.condition)
 
-    ######################## Generation Strategy ###################################
+    ################################### Generation Strategy ###################################
     model_dict = {'MOO': Models.MOO, 'GPEI': Models.GPEI, 'SAASBO': Models.SAASBO,}
     gs = GenerationStrategy(
         steps=[
     #         only use this when there is no initial data
-            GenerationStep(
-            model=Models.SOBOL, 
-            num_trials=5,
-            max_parallelism=1,
-            model_kwargs={"seed": 42}, 
-            ),
             GenerationStep(
                 model=model_dict['GPEI'],
                 num_trials=-1,  # No limitation on how many trials should be produced from this step
@@ -112,6 +111,13 @@ if __name__ == "__main__":
         overwrite_existing_experiment=True,
         is_test=True,
     )
+    ################################### Load previous data ###################################
+    for i, row in previous_data.iterrows():
+        input_parameters = row[[f"x{i+1}" for i in range(number_flexible_parameters)]].to_dict()
+        output_response = row[args.task].to_dict()
+        ax_client.attach_trial(input_parameters)
+        ax_client.complete_trial(i, output_response)
+    ##########################################################################################
 
     def evaluate(parameters):
         partial_inputs = np.array([parameters.get(f"x{i+1}") for i in range(number_flexible_parameters)])
@@ -123,17 +129,17 @@ if __name__ == "__main__":
         if not args.no_chemistry_constraint:
             inputs = cwg.apply_chemistry_constraint(inputs)
         mg = MoleculeGenerator(args.num_heavy_atom, all_weight_vector=inputs)
-        smiles_dict, validity, diversity = mg.sample_molecule(args.num_sample)
+        smiles_dict, validity, product_validity_uniqueness = mg.sample_molecule(args.num_sample)
         score_dict = fitness_calculator.evaluate(smiles_dict)
         for task, objective in zip(args.task, args.objective):
             logger.info(f"{task} ({objective}): {score_dict[task][0]:.3f}")
         # Set standard error to None if the noise level is unknown.
         return score_dict
 
-    for i in range(args.num_iterations + 5):
-        logger.info(f"Iteration number: {i}")
+    for i in range(args.num_iterations):
         parameters, trial_index = ax_client.get_next_trial()
+        logger.info(f"Iteration number: {trial_index}")
         ax_client.complete_trial(trial_index=trial_index, raw_data=evaluate(parameters))
 
         trial_df = ax_client.get_trials_data_frame()
-        trial_df.to_csv(f"{data_dir}/{args.task_name}.csv", index=False)
+        trial_df.to_csv(f"{data_dir}/{args.task_name}_further.csv", index=False)

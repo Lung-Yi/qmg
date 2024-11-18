@@ -29,15 +29,22 @@ class FitnessCalculator():
             total_valid_samples = sum(smiles_dict_copy.values())
             total_unique_smiles = len(smiles_dict_copy.keys())
             return total_unique_smiles / total_valid_samples
+        elif self.task in ["product_validity_uniqueness", "product_uniqueness_validity"]:
+            total_samples = sum(smiles_dict.values())
+            smiles_dict_copy = smiles_dict.copy()
+            smiles_dict_copy.pop("None", None)
+            smiles_dict_copy.pop(None, None)
+            total_unique_smiles = len(smiles_dict_copy.keys())
+            return total_unique_smiles / total_samples
         
         total_count = 0
         property_sum = 0
         for smiles, count in smiles_dict.items():
-            total_count += count
             mol = Chem.MolFromSmiles(str(smiles))
             if mol == None:
                 continue
             else:
+                total_count += count
                 if condition_score:
                     property_sum += np.abs(self.calc_property(mol) - condition_score) * count
                 else:
