@@ -28,7 +28,11 @@ if __name__ == "__main__":
     trial_df = pd.read_csv(file_name)
 
     cwg = ConditionalWeightsGenerator(args.num_heavy_atom, smarts=args.smarts, disable_connectivity_position=args.disable_connectivity_position)
-    random_weight_vector = cwg.generate_conditional_random_weights(random_seed=0)
+    if args.smarts:
+        random_weight_vector = cwg.generate_conditional_random_weights(random_seed=0)
+    else:
+        random_weight_vector = np.zeros(cwg.length_all_weight_vector)
+
     inputs = random_weight_vector
     number_flexible_parameters = len(random_weight_vector[cwg.parameters_indicator == 0.])
     partial_inputs = np.array(trial_df[trial_df["trial_index"] == args.index][[f"x{i+1}" for i in range(number_flexible_parameters)]])[0]
@@ -37,8 +41,10 @@ if __name__ == "__main__":
         inputs = cwg.apply_chemistry_constraint(inputs)
 
     mg = MoleculeGenerator(args.num_heavy_atom, all_weight_vector=inputs)
-    smiles_dict, validity, diversity = mg.sample_molecule(args.num_sample)
+    smiles_dict, validity, uniqueness = mg.sample_molecule(args.num_sample)
     print(smiles_dict)
+    print("validity:", validity)
+    print("uniqueness:", uniqueness)
 
     if args.no_chemistry_constraint:
         with open(f"results_unconstrained_bo/sample_{args.task_name}_{args.index}.pkl", "wb") as f:

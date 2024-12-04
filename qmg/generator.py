@@ -80,8 +80,8 @@ class MoleculeGenerator():
             if smiles:
                 num_valid_molecule += value
         validity = num_valid_molecule / num_sample
-        diversity = (len(smiles_dict.keys()) - 1) / num_sample
-        return smiles_dict, validity, diversity
+        uniqueness = (len(smiles_dict.keys()) - 1) / num_valid_molecule
+        return smiles_dict, validity, uniqueness
     
 if __name__ == "__main__":
     num_heavy_atom = 5

@@ -12,3 +12,5 @@ qmg/train_old/
 docs_old/
 docs/ibmq_tokens.txt
 results_*
+dataset/*.csv
+test_development/

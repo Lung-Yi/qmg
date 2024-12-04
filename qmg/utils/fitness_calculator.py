@@ -1,6 +1,7 @@
 from rdkit import Chem
 from rdkit.Chem import Descriptors
 from rdkit.Contrib.SA_Score import sascorer
+from rdkit.Chem.Crippen import MolLogP, MolMR
 import numpy as np
 
 class FitnessCalculator():
@@ -13,6 +14,10 @@ class FitnessCalculator():
             return Descriptors.qed(mol)
         elif self.task == "logP":
             return Descriptors.MolLogP(mol)
+        elif self.task == "ClogP":
+            return MolLogP(mol)
+        elif self.task == "CMR":
+            return MolMR(mol)
         elif self.task == "tpsa":
             return Descriptors.TPSA(mol)
         elif self.task in ["sascore", "SAscore"]:
@@ -28,17 +33,18 @@ class FitnessCalculator():
             smiles_dict_copy.pop(None, None)
             total_valid_samples = sum(smiles_dict_copy.values())
             total_unique_smiles = len(smiles_dict_copy.keys())
-            return total_unique_smiles / total_valid_samples
+            return total_unique_smiles / total_valid_samples, total_unique_smiles / total_valid_samples
         elif self.task in ["product_validity_uniqueness", "product_uniqueness_validity"]:
             total_samples = sum(smiles_dict.values())
             smiles_dict_copy = smiles_dict.copy()
             smiles_dict_copy.pop("None", None)
             smiles_dict_copy.pop(None, None)
             total_unique_smiles = len(smiles_dict_copy.keys())
-            return total_unique_smiles / total_samples
+            return total_unique_smiles / total_samples, total_unique_smiles / total_samples
         
         total_count = 0
         property_sum = 0
+        property_pure_sum = 0
         for smiles, count in smiles_dict.items():
             mol = Chem.MolFromSmiles(str(smiles))
             if mol == None:
@@ -46,10 +52,13 @@ class FitnessCalculator():
             else:
                 total_count += count
                 if condition_score:
-                    property_sum += np.abs(self.calc_property(mol) - condition_score) * count
+                    mol_property = self.calc_property(mol)
+                    property_sum += np.abs(mol_property - condition_score) * count
+                    property_pure_sum += mol_property * count
                 else:
                     property_sum += self.calc_property(mol) * count
-        return property_sum / total_count
+                    property_pure_sum = property_sum
+        return property_sum / total_count, property_pure_sum / total_count
     
     def generate_distribution(self, smiles_dict: dict):
         data_list = []
@@ -92,6 +101,10 @@ class FitnessCalculatorWrapper():
         self.task_condition = {task: condition for task, condition in zip(self.task_list, self.condition_list)}
     
     def evaluate(self, smiles_dict):
-        score_dict = {task: (self.function_dict[task].calc_score(smiles_dict, self.task_condition[task]), None) 
-                      for task in self.task_list}
-        return score_dict
+        score_dict = dict()
+        score_pure_dict = dict()
+        for task in self.task_list:
+            score, score_pure = self.function_dict[task].calc_score(smiles_dict, self.task_condition[task])
+            score_dict.update({task: (score, None) })
+            score_pure_dict.update({task: score_pure})
+        return score_dict, score_pure_dict

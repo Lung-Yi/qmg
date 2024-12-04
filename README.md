@@ -1,6 +1,11 @@
 # QMG: Quantum computing-based molecule generation
 This repository demonstrates the useage of quantum circuits for the generation of small molecules.
 
+The building blocks of the quantum circuits are illustrated in the figure below:
+
+<!-- ![alt text](docs/02_building_blocks.svg) -->
+<img src="docs/02_building_blocks.svg" style="width: 100%; height: auto;">
+
 ## OS Requirements
 This repository requires to operate on **Linux** operating system.
 

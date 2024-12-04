@@ -35,7 +35,8 @@ if __name__ == "__main__":
     parser = argparse.ArgumentParser()
     parser.add_argument('--task_name', type=str,)
     parser.add_argument('--task', nargs='+', type=str, default=None,
-                        choices=["validity", "uniqueness", "qed", "logP", "tpsa", "sascore", "SAscore", "product_validity_uniqueness", "product_uniqueness_validity"])
+                        choices=["validity", "uniqueness", "qed", "logP", "tpsa", "sascore", "SAscore", "ClogP", "CMR",
+                                 "product_validity_uniqueness", "product_uniqueness_validity"])
     parser.add_argument('--condition', nargs='+', type=str, default=None) # can be None or float number
     parser.add_argument('--objective', nargs='+', type=str, choices=["minimize", "maximize"], default=None)
     parser.add_argument('--num_heavy_atom', type=int, default=5)
@@ -48,7 +49,7 @@ if __name__ == "__main__":
 
     assert len(args.task) == len(args.condition) == len(args.objective)
     if args.no_chemistry_constraint:
-        data_dir = "results_unconstrained_bo"
+        data_dir = "results_no_chemistry_constraint_bo"
     else:
         data_dir = "results_chemistry_constraint_bo"
     file_name = f"{data_dir}/{args.task_name}.log"
@@ -123,10 +124,13 @@ if __name__ == "__main__":
         if not args.no_chemistry_constraint:
             inputs = cwg.apply_chemistry_constraint(inputs)
         mg = MoleculeGenerator(args.num_heavy_atom, all_weight_vector=inputs)
-        smiles_dict, validity, diversity = mg.sample_molecule(args.num_sample)
-        score_dict = fitness_calculator.evaluate(smiles_dict)
-        for task, objective in zip(args.task, args.objective):
-            logger.info(f"{task} ({objective}): {score_dict[task][0]:.3f}")
+        smiles_dict, validity, uniqueness = mg.sample_molecule(args.num_sample)
+        score_dict, score_pure_dict = fitness_calculator.evaluate(smiles_dict)
+        for task, objective, condition in zip(args.task, args.objective, args.condition):
+            if str(condition) == "None":
+                logger.info(f"{task} ({objective}): {score_dict[task][0]:.3f}")
+            else:
+                logger.info(f"{task} (close to {condition}): {score_pure_dict[task]:.3f}")
         # Set standard error to None if the noise level is unknown.
         return score_dict
 
@@ -136,4 +140,4 @@ if __name__ == "__main__":
         ax_client.complete_trial(trial_index=trial_index, raw_data=evaluate(parameters))
 
         trial_df = ax_client.get_trials_data_frame()
-        trial_df.to_csv(f"{data_dir}/{args.task_name}.csv", index=False)
+        trial_df.to_csv(f"{data_dir}/{args.task_name}_0.csv", index=False)
