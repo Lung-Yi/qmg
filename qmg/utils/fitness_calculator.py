@@ -3,6 +3,7 @@ from rdkit.Chem import Descriptors
 from rdkit.Contrib.SA_Score import sascorer
 from rdkit.Chem.Crippen import MolLogP, MolMR
 import numpy as np
+from typing import List
 
 class FitnessCalculator():
     def __init__(self, task, distribution_learning=True):
@@ -94,8 +95,8 @@ class FitnessCalculator():
         return prop_dict
 
 class FitnessCalculatorWrapper():
-    def __init__(self, task, condition:None):
-        self.task_list = task
+    def __init__(self, task_list: List[str], condition:None):
+        self.task_list = task_list
         self.condition_list = [float(x) if x not in [None, "None"] else None for x in condition]
         self.function_dict = {task: FitnessCalculator(task) for task in self.task_list}
         self.task_condition = {task: condition for task, condition in zip(self.task_list, self.condition_list)}

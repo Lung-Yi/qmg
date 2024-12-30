@@ -81,7 +81,7 @@ if __name__ == "__main__":
     logger.info(f"Number of flexible parameters: {number_flexible_parameters}")
     random_weight_vector[cwg.parameters_indicator == 0.] = np.random.rand(len(random_weight_vector[cwg.parameters_indicator == 0.]))
 
-    fitness_calculator = FitnessCalculatorWrapper(task=args.task, condition=args.condition)
+    fitness_calculator = FitnessCalculatorWrapper(task_list=args.task, condition=args.condition)
 
     ################################### Generation Strategy ###################################
     model_dict = {'MOO': Models.MOO, 'GPEI': Models.GPEI, 'SAASBO': Models.SAASBO,}
