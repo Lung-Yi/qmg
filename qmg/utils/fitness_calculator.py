@@ -27,14 +27,16 @@ class FitnessCalculator():
     def calc_score(self, smiles_dict: dict, condition_score=None):
         if self.task == "validity":
             total_samples = sum(smiles_dict.values())
-            return (total_samples - smiles_dict.get(None, 0) - smiles_dict.get("None", 0)) / total_samples
+            validity = (total_samples - smiles_dict.get(None, 0) - smiles_dict.get("None", 0)) / total_samples
+            return validity, validity
         elif self.task == "uniqueness":
             smiles_dict_copy = smiles_dict.copy()
             smiles_dict_copy.pop("None", None)
             smiles_dict_copy.pop(None, None)
             total_valid_samples = sum(smiles_dict_copy.values())
             total_unique_smiles = len(smiles_dict_copy.keys())
-            return total_unique_smiles / total_valid_samples, total_unique_smiles / total_valid_samples
+            uniqueness = total_unique_smiles / total_valid_samples
+            return uniqueness, uniqueness
         elif self.task in ["product_validity_uniqueness", "product_uniqueness_validity"]:
             total_samples = sum(smiles_dict.values())
             smiles_dict_copy = smiles_dict.copy()

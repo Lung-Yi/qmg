@@ -22,7 +22,7 @@ if __name__ == "__main__":
     args = parser.parse_args()
 
     if args.no_chemistry_constraint:
-        file_name = f"results_unconstrained_bo/{args.task_name}.csv"
+        file_name = f"results_no_chemistry_constraint_bo/{args.task_name}.csv"
     else:
         file_name = f"results_chemistry_constraint_bo/{args.task_name}.csv"
     trial_df = pd.read_csv(file_name)
@@ -47,7 +47,7 @@ if __name__ == "__main__":
     print("uniqueness:", uniqueness)
 
     if args.no_chemistry_constraint:
-        with open(f"results_unconstrained_bo/sample_{args.task_name}_{args.index}.pkl", "wb") as f:
+        with open(f"results_no_chemistry_constraint_bo/sample_{args.task_name}_{args.index}.pkl", "wb") as f:
             pickle.dump(smiles_dict, f)
     else:
         with open(f"results_chemistry_constraint_bo/sample_{args.task_name}_{args.index}.pkl", "wb") as f:

@@ -232,7 +232,7 @@ class MoleculeQuantumStateGenerator():
         decimal = int(quantum_state, 2)
         return decimal
     
-    def post_process_quantum_state(self, result_state: str):
+    def post_process_quantum_state(self, result_state: str, reverse=True):
         """
         Reverse the qiskit outcome state and change the order to meet the definition of node vector and adjacency matrix.
 
@@ -240,7 +240,8 @@ class MoleculeQuantumStateGenerator():
         :return: str of post-processed quantum state
         """
         assert len(result_state) == self.size*(self.size+1)
-        result_state = result_state[::-1]
+        if reverse:
+            result_state = result_state[::-1]
         quantum_state = ""
         for i in range(self.size):
             atom_start_idx = i*2 + i*(i-1)
