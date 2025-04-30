@@ -14,5 +14,5 @@ docs_old/
 docs/ibmq_tokens.txt
 docker_commands/
 dataset/*.csv
-test_development/
+# test_development/
 *.pyc
